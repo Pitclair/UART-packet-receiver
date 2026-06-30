@@ -1,11 +1,11 @@
 # UART Packet Receiver
 
-A robust firmware system that receives, validates, and processes structured packets over UART with support for command execution including LED control, mode changes, and configuration updates.  
+A firmware system that receives, validates, and processes structured packets over UART with support for command execution including LED control, mode changes, and configuration updates.  
 
 ## Requirements
 
 ### Hardware
-- Microcontroller (e.g., Arduino Uno, STM32, ESP32)
+- Microcontroller (Arduino Uno)
 - Serial terminal or USB-to-UART adapter
 - LED and/or button for testing command effects
 
@@ -48,25 +48,35 @@ pio device monitor
 
 ## Packet Format
 
-A typical packet structure:
+The UART packet uses a 3-byte structure:
+
 ```
-[START_BYTE] [LENGTH] [CMD] [PAYLOAD...] [CHECKSUM]
++------------+------------+------------+
+| START BYTE | CMD BYTE   | CHECKSUM   |
++------------+------------+------------+
+|   0xAA     |   0x??     |   0x??     |
++------------+------------+------------+
+   byte 0       byte 1       byte 2
 ```
 
-- **START_BYTE**: Frame delimiter (e.g., 0xAA)
-- **LENGTH**: Payload length
-- **CMD**: Command code (e.g., LED_ON, LED_OFF, MODE_CHANGE)
-- **PAYLOAD**: Command arguments (variable length)
-- **CHECKSUM**: Validation (CRC or simple sum)
+- **START_BYTE** (byte 0): Frame delimiter (0xAA)
+- **CMD BYTE** (byte 1): Command code
+- **CHECKSUM** (byte 2): Validation byte calculated as `START_BYTE XOR CMD_BYTE`
 
-## Example Commands
+### Checksum Calculation
+```
+checksum = START ^ CMD
+```
 
-| Command | Code | Effect |
-|---------|------|--------|
-| LED On  | 0x01 | Turn on LED |
-| LED Off | 0x02 | Turn off LED |
-| Mode Change | 0x03 | Switch firmware mode |
-| Config Update | 0x04 | Update settings |
+## Commands & Scenarios
+
+| Scenario | Hex Bytes | Decimal Values |
+|----------|-----------|-----------------|
+| LED Pulse | AA 01 AB | 170, 1, 171 |
+| LED ON | AA 02 A8 | 170, 2, 168 |
+| LED OFF | AA 03 A9 | 170, 3, 169 |
+
+**Example transmission**: To turn on LED, send bytes: `0xAA 0x02 0xA8`
 
 ## Building & Testing
 
