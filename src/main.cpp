@@ -1,18 +1,27 @@
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
-
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  // configuring pin mode: output
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  // make sure the serial terminal replicates this rate
+  Serial.begin(9600);
+
+  delay(200);
+
+  Serial.println("================================");
+  Serial.println("Step 1 firmware booted");
+  Serial.println("LED blink + UART TX test");
+  Serial.println("Baud: 9600");
+  Serial.println("================================");
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
+  digitalWrite(LED_BUILTIN, HIGH);
+  Serial.println("LED ON");
+  delay(500);
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  digitalWrite(LED_BUILTIN, LOW);
+  Serial.println("LED OFF");
+  delay(500);
 }

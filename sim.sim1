@@ -1,15 +1,25 @@
 <circuit version="1.0.0-SR1" rev="1402" stepSize="1000000" stepsPS="1000000" NLsteps="100000" reaStep="1000000" animate="0" >
 
-<item itemtype="Subcircuit" CircId="Uno-1" mainComp="false" Show_id="true" Show_Val="false" Pos="628,624" rotation="0" hflip="1" vflip="1" label="Uno-1" idLabPos="0,-20" labelrot="0" valLabPos="-16,20" valLabRot="0" Logic_Symbol="true">
-<mainCompProps itemtype="MCU" CircId="1_mega328-109" mainComp="true" Show_id="false" Show_Val="false" Pos="20,20" rotation="0" hflip="1" vflip="1" label="1_mega328-109" idLabPos="0,-20" labelrot="0" valLabPos="-16,20" valLabRot="0" Frequency="16 MHz" Auto_Load="false" Rst_enabled="true" Ext_Osc="true" Wdt_enabled="false" />
+<item itemtype="Subcircuit" CircId="Uno-1" mainComp="false" Show_id="true" Show_Val="false" Pos="780,552" rotation="0" hflip="1" vflip="1" label="Uno-1" idLabPos="0,-20" labelrot="0" valLabPos="-16,20" valLabRot="0" Logic_Symbol="false">
+<mainCompProps itemtype="MCU" CircId="1_mega328-109" mainComp="true" Show_id="false" Show_Val="false" Pos="20,20" rotation="0" hflip="1" vflip="1" label="1_mega328-109" idLabPos="0,-20" labelrot="0" valLabPos="-16,20" valLabRot="0" Frequency="16 MHz" Program=".pio/build/uno/firmware.hex" Auto_Load="false" Rst_enabled="true" Ext_Osc="true" Wdt_enabled="false" />
 </item>
 
-<item itemtype="Led" CircId="Led-2" mainComp="false" Show_id="false" Show_Val="false" Pos="760,724" rotation="0" hflip="1" vflip="1" label="Led-2" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Color="Yellow" Grounded="false" Threshold="2.4 V" MaxCurrent="0.03 A" Resistance="0.6 Ω" />
+<item itemtype="Led" CircId="Led-2" mainComp="false" ShowProp="Color" Show_id="false" Show_Val="true" Pos="708,776" rotation="0" hflip="1" vflip="1" label="Led-2" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Color="Orange" Grounded="false" Threshold="2 V" MaxCurrent="0.03 A" Resistance="0.6 Ω" />
 
-<item itemtype="SerialPort" CircId="SerialPort-5" mainComp="false" Show_id="false" Show_Val="false" Pos="784,796" rotation="0" hflip="1" vflip="1" label="SerialPort-5" idLabPos="-20,-32" labelrot="0" valLabPos="-16,20" valLabRot="0" Baudrate="9600 _Bauds" DataBits="8 _Bits" StopBits="1 _Bits" />
+<item itemtype="SerialPort" CircId="SerialPort-5" mainComp="false" Show_id="false" Show_Val="false" Pos="628,636" rotation="0" hflip="1" vflip="1" label="SerialPort-5" idLabPos="-20,-32" labelrot="0" valLabPos="-16,20" valLabRot="0" Baudrate="9600 _Bauds" DataBits="8 _Bits" StopBits="1 _Bits" />
 
-<item itemtype="Connector" uid="Connector-6" startpinid="SerialPort-5-pin0" endpinid="Uno-1-0" pointList="744,788,684,788,684,784" />
+<item itemtype="Ground" CircId="Ground-8" mainComp="false" Show_id="false" Show_Val="false" Pos="752,800" rotation="0" hflip="1" vflip="1" label="Ground-8" idLabPos="-16,8" labelrot="0" valLabPos="-16,20" valLabRot="0" />
 
-<item itemtype="Connector" uid="Connector-7" startpinid="SerialPort-5-pin1" endpinid="Uno-1-1" pointList="744,804,684,804,684,776" />
+<item itemtype="Resistor" CircId="Resistor-9" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="684,692" rotation="0" hflip="1" vflip="1" label="Resistor-9" idLabPos="-16,-24" labelrot="0" valLabPos="-9,5" valLabRot="0" Resistance="220 Ω" />
+
+<item itemtype="Connector" uid="connector-10" startpinid="SerialPort-5-pin0" endpinid="Uno-1-0" pointList="588,628,588,568,788,568" />
+
+<item itemtype="Connector" uid="connector-11" startpinid="Uno-1-13" endpinid="Resistor-9-rPin" pointList="788,680,700,680,700,692" />
+
+<item itemtype="Connector" uid="connector-12" startpinid="Led-2-lPin" endpinid="Resistor-9-lPin" pointList="692,776,664,776,664,692,668,692" />
+
+<item itemtype="Connector" uid="connector-13" startpinid="Ground-8-Gnd" endpinid="Led-2-rPin" pointList="752,784,752,776,724,776" />
+
+<item itemtype="Connector" uid="connector-14" startpinid="SerialPort-5-pin1" endpinid="Uno-1-1" pointList="588,644,588,576,788,576" />
 
 </circuit>
