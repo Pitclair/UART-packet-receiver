@@ -1,139 +1,132 @@
 #include <Arduino.h>
+#include "uart_app.h"
+#include "led_status.h"
+#include "packet.h"
+#include "parser.h"
 
-const unsigned long LED_ON_TIME_MS = 200;
-unsigned long ledOffAt = 0;
-bool ledIsOn = false;
+static LedStatus gLed;
+static PacketParser gParser;
 
-
-const byte START_BYTE = 0xAA;
-
-byte packetBuffer[3];
-byte packetIndex = 0;
-
-
-void pulseLed(unsigned long now) {
-    // nonblocking timing pattern for the blinky
-    digitalWrite(LED_BUILTIN, HIGH);
-    ledIsOn = true;
-    ledOffAt = now + LED_ON_TIME_MS;
-}
-
-void updateLed(unsigned long now) {
-  if (ledIsOn && now >= ledOffAt) {
-    digitalWrite(LED_BUILTIN, LOW);
-    ledIsOn = false;
+static void printHexByte(byte value) {
+  if (value < 16) {
+    Serial.print("0");
   }
+  Serial.print(value, HEX);
 }
 
+static void printPacket(const Packet &packet) {
+  Serial.print("Packet: AA ");
+  printHexByte(packet.len);
+  Serial.print(" ");
+  printHexByte(packet.cmd);
 
-byte computeChecksum(byte start, byte cmd) {
-  return start ^ cmd;
-}
-
-
-void handleCommand(byte cmd, unsigned long now) {
-  switch (cmd) {
-    case 0x01:
-      Serial.println("Command 0x01: Led pulse");
-      pulseLed(now);
-      break;
-    case 0x02:
-      Serial.println("Command 0x02: Led on");
-      digitalWrite(LED_BUILTIN, HIGH);
-      ledIsOn = false;
-      break;
-    case 0x03:
-      Serial.println("Command 0x03: Led off");
-      digitalWrite(LED_BUILTIN, LOW);
-      ledIsOn = false;
-      break;
-    default:
-      Serial.print("Unknown command: ");
-      break;
+  for (byte i = 0; i < packet.len; i++) {
+    Serial.print(" ");
+    printHexByte(packet.payload[i]);
   }
+
+  Serial.print(" ");
+  printHexByte(packetComputeChecksum(packet));
+  Serial.println();
 }
 
-void processIncomingByte(byte incomingByte, unsigned long now) {
+static void handlePacket(const Packet &packet, unsigned long now) {
+  Serial.print("Valid packet. CMD=0x");
+  printHexByte(packet.cmd);
+  Serial.print(" LEN=");
+  Serial.println(packet.len);
 
-  // detect first byte
-  if (packetIndex == 0) {
-    if (incomingByte == START_BYTE) {
-      packetBuffer[packetIndex] = incomingByte;
-      packetIndex = 1;
-      Serial.println("Start byte detected");
+  if (packet.cmd == 0x01) {
+    if (packet.len != 0) {
+      Serial.println("Error: CMD 0x01 expects LEN=0");
+      return;
+    }
+
+    Serial.println("Action: pulse LED");
+    ledPulse(gLed, now);
+    return;
+  }
+
+  if (packet.cmd == 0x02) {
+    if (packet.len != 1) {
+      Serial.println("Error: CMD 0x02 expects LEN=1");
+      return;
+    }
+
+    if (packet.payload[0] == 0x00) {
+      Serial.println("Action: LED OFF");
+      ledSetOff(gLed);
+    } else if (packet.payload[0] == 0x01) {
+      Serial.println("Action: LED ON");
+      ledSetOn(gLed);
     } else {
-      Serial.print("Ignored byte: 0x");
-      if (incomingByte < 16) {
-        Serial.print("0");
-      }
-      Serial.println(incomingByte, HEX);
+      Serial.println("Error: LED state must be 0x00 or 0x01");
     }
     return;
   }
 
-  // write the command
-  packetBuffer[packetIndex] = incomingByte;
-  packetIndex++;
-
-  if (packetIndex == 3) {
-    byte startByte = packetBuffer[0];
-    byte cmdByte = packetBuffer[1];
-    byte receivedChecksum = packetBuffer[2];
-    byte expectedChecksum = computeChecksum(startByte, cmdByte);  
-    Serial.print("Packet received: ");
-    Serial.print("0x");
-    if (startByte < 16) Serial.print("0");
-    Serial.print(startByte, HEX);
-    Serial.print(" 0x");
-    if (cmdByte < 16) Serial.print("0");
-    Serial.print(cmdByte, HEX);
-    Serial.print(" 0x");
-    if (receivedChecksum < 16) Serial.print("0");
-    Serial.println(receivedChecksum, HEX);
-
-    if (receivedChecksum == expectedChecksum) {
-      Serial.println("Checksum OK");
-      handleCommand(cmdByte, now);
-    } else {
-      Serial.print("Checksum FAIL. Expected 0x");
-      if (expectedChecksum < 16) {
-        Serial.print("0");
-      }
-      Serial.println(expectedChecksum, HEX);
+  if (packet.cmd == 0x03) {
+    if (packet.len != 1) {
+      Serial.println("Error: CMD 0x03 expects LEN=1");
+      return;
     }
 
-    packetIndex = 0;
+    unsigned long pulseTimeMs = (unsigned long)packet.payload[0] * 10UL;
+    ledSetPulseTime(gLed, pulseTimeMs);
+
+    Serial.print("Action: LED pulse time set to ");
+    Serial.print(gLed.pulseTimeMs);
+    Serial.println(" ms");
+    return;
   }
+
+  Serial.println("Error: Unknown command");
 }
 
-
-
 void appSetup() {
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);
+  ledBegin(gLed, 200);
+  parserInit(gParser);
 
   Serial.begin(9600);
   delay(200);
 
   Serial.println("================================");
-  Serial.println("fixed UART packets");
-  Serial.println("Packet format: [0xAA][CMD][CHK]");
-  Serial.println("CHK = START ^ CMD");
-  Serial.println("CMD 0x01 = pulse LED");
-  Serial.println("CMD 0x02 = LED ON");
-  Serial.println("CMD 0x03 = LED OFF");
+  Serial.println("Format: [AA][LEN][CMD][PAYLOAD...][CHK]");
+  Serial.println("CHK = LEN ^ CMD ^ all PAYLOAD bytes");
+  Serial.println("CMD 01: pulse LED");
+  Serial.println("CMD 02: set LED state, payload 00=OFF 01=ON");
+  Serial.println("CMD 03: set pulse time, payload = value * 10 ms");
   Serial.println("================================");
 }
 
 void appLoop() {
   unsigned long now = millis();
 
-  // this loop is done for every byte. so if i have typed a multiple letter word,
-  // it will be echoed back one letter at a time. 
-  if (Serial.available() > 0) {
+  while (Serial.available() > 0) {
+    Packet packet;
     byte incomingByte = (byte)Serial.read();
-    processIncomingByte(incomingByte, now);
+
+    ParseResult result = parserProcessByte(gParser, incomingByte, packet);
+
+    if (result == PARSE_PACKET_READY) {
+      printPacket(packet);
+      Serial.println("Checksum OK");
+      handlePacket(packet, now);
+    } else if (result == PARSE_ERROR) {
+      Serial.print("Parser error: ");
+      Serial.println(parserErrorToString(gParser.lastError));
+
+      if (gParser.lastError == PARSER_CHECKSUM_MISMATCH) {
+        Serial.print("Expected checksum: 0x");
+        printHexByte(gParser.lastExpectedChecksum);
+        Serial.println();
+
+        Serial.print("Received checksum: 0x");
+        printHexByte(gParser.lastReceivedChecksum);
+        Serial.println();
+      }
+    }
   }
 
-  updateLed(now);
+  ledUpdate(gLed, now);
 }
