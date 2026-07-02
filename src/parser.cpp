@@ -12,10 +12,15 @@ void parserInit(PacketParser &parser) {
   parser.lastError = PARSER_OK;
   parser.lastExpectedChecksum = 0;
   parser.lastReceivedChecksum = 0;
+
+  parser.lastByteAt = 0;
+  parser.timeoutMs = DEFAULT_TIMEOUT_MS;
+
   parserResetWorkingState(parser);
 }
 
 ParseResult parserProcessByte(PacketParser &parser, byte incomingByte, Packet &outPacket) {
+  parser.lastByteAt = millis();
   switch (parser.state) {
     case WAIT_START:
       if (incomingByte == START_BYTE) {
@@ -94,7 +99,23 @@ const char* parserErrorToString(ParserError error) {
     case PARSER_CHECKSUM_MISMATCH:
       return "Checksum mismatch";
     case PARSER_OK:
+    case PARSER_TIMEOUT:
+      return "Packet timeout";
     default:
       return "No error";
   }
+}
+
+ParseResult parserCheckTimeout(PacketParser &parser, unsigned long now) {
+  if (parser.state == WAIT_START) {
+    return PARSE_NONE;
+  }
+
+  if ((now - parser.lastByteAt) >= parser.timeoutMs) {
+    parser.lastError = PARSER_TIMEOUT;
+    parserResetWorkingState(parser);
+    return PARSE_ERROR;
+  }
+
+  return PARSE_NONE;
 }

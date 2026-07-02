@@ -4,6 +4,9 @@
 #include <Arduino.h>
 #include "packet.h"
 
+static const unsigned long DEFAULT_TIMEOUT_MS = 10000;
+
+
 enum ParseResult {
   PARSE_NONE,
   PARSE_PACKET_READY,
@@ -21,7 +24,8 @@ enum ParserState {
 enum ParserError {
   PARSER_OK,
   PARSER_LEN_TOO_LARGE,
-  PARSER_CHECKSUM_MISMATCH
+  PARSER_CHECKSUM_MISMATCH,
+  PARSER_TIMEOUT
 };
 
 struct PacketParser {
@@ -36,10 +40,16 @@ struct PacketParser {
 
   byte lastExpectedChecksum;
   byte lastReceivedChecksum;
+
+  unsigned long lastByteAt;
+  unsigned long timeoutMs;
 };
 
 void parserInit(PacketParser &parser);
 ParseResult parserProcessByte(PacketParser &parser, byte incomingByte, Packet &outPacket);
 const char* parserErrorToString(ParserError error);
+
+ParseResult parserCheckTimeout(PacketParser &parser, unsigned long now);
+
 
 #endif
