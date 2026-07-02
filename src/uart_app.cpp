@@ -36,7 +36,7 @@ static void handlePacket(const Packet &packet, unsigned long now) {
   Serial.print(" LEN=");
   Serial.println(packet.len);
 
-  if (packet.cmd == 0x01) {
+  if (packet.cmd == CMD_PULSE_LED) {
     if (packet.len != 0) {
       Serial.println("Error: CMD 0x01 expects LEN=0");
       return;
@@ -47,7 +47,7 @@ static void handlePacket(const Packet &packet, unsigned long now) {
     return;
   }
 
-  if (packet.cmd == 0x02) {
+  if (packet.cmd == CMD_SET_LED_STATE) {
     if (packet.len != 1) {
       Serial.println("Error: CMD 0x02 expects LEN=1");
       return;
@@ -65,7 +65,7 @@ static void handlePacket(const Packet &packet, unsigned long now) {
     return;
   }
 
-  if (packet.cmd == 0x03) {
+  if (packet.cmd == CMD_SET_PULSE_TIME) {
     if (packet.len != 1) {
       Serial.println("Error: CMD 0x03 expects LEN=1");
       return;
@@ -102,6 +102,21 @@ static void handlePacket(const Packet &packet, unsigned long now) {
     return;
   }
 
+  if (packet.cmd == CMD_SET_BLINK_INTERVAL) {
+  if (packet.len != 1) {
+    Serial.println("Error: CMD 0x06 expects LEN=1");
+    return;
+  }
+
+  unsigned long blinkIntervalMs = (unsigned long)packet.payload[0] * 10UL;
+  ledSetBlinkInterval(gLed, blinkIntervalMs);
+
+  Serial.print("Action: blink interval set to ");
+  Serial.print(gLed.blinkIntervalMs);
+  Serial.println(" ms");
+  return;
+}
+
   Serial.println("Error: Unknown command");
 }
 
@@ -120,6 +135,7 @@ void appSetup() {
   Serial.println("CMD 03: set pulse time, payload = value * 10 ms");
   Serial.println("CMD 04: enter blink mode");
   Serial.println("CMD 05: exit blink mode");
+  Serial.println("CMD 06: set blink interval: payload = value * 10 ms");
   Serial.println("================================");
 }
 

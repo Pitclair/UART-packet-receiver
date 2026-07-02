@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+static const unsigned long BLINK_INTERVAL_MS = 300;
+
 enum LedMode {
   LED_MODE_OFF,
   LED_MODE_ON,
