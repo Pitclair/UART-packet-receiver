@@ -80,6 +80,28 @@ static void handlePacket(const Packet &packet, unsigned long now) {
     return;
   }
 
+  if (packet.cmd == CMD_ENTER_BLINK) {
+    if (packet.len != 0) {
+      Serial.println("Error: CMD 0x04 expects LEN=0");
+      return;
+    }
+
+    Serial.println("Action: Enter blink mode");
+    ledEnterBlinkMode(gLed, now);
+    return;
+  }
+
+  if (packet.cmd == CMD_EXIT_BLINK) {
+    if (packet.len != 0) {
+      Serial.println("Error: CMD 0x05 expects LEN=0");
+      return;
+    }
+
+    Serial.println("Action: Exit blink mode");
+    ledExitBlinkMode(gLed);
+    return;
+  }
+
   Serial.println("Error: Unknown command");
 }
 
@@ -96,6 +118,8 @@ void appSetup() {
   Serial.println("CMD 01: pulse LED");
   Serial.println("CMD 02: set LED state, payload 00=OFF 01=ON");
   Serial.println("CMD 03: set pulse time, payload = value * 10 ms");
+  Serial.println("CMD 04: enter blink mode");
+  Serial.println("CMD 05: exit blink mode");
   Serial.println("================================");
 }
 
