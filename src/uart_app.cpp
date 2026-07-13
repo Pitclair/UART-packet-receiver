@@ -52,17 +52,17 @@ static void sendPacket(byte cmd, const byte *payload, byte len) {
 }
 
 static void sendAck(byte originalCmd) {
-  byte payload[1] = { originalCmd };
+  const byte payload[1] = { originalCmd };
   sendPacket(RSP_ACK, payload, 1);
 }
 
 static void sendError(byte originalCmd, byte errorCode) {
-  byte payload[2] = { originalCmd, errorCode };
+  const byte payload[2] = { originalCmd, errorCode };
   sendPacket(RSP_ERROR, payload, 2);
 }
 
 static void sendStatus(byte modeValue, byte ledValue, byte blinkIntervalUnits) {
-  byte payload[3] = { modeValue, ledValue, blinkIntervalUnits };
+  const byte payload[3] = { modeValue, ledValue, blinkIntervalUnits };
   sendPacket(RSP_STATUS, payload, 3);
 }
 

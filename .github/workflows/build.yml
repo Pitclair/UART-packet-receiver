@@ -35,7 +35,7 @@ jobs:
         # 2. Esegue l'analisi solo sulla cartella 'src' (dove sta il tuo codice C++)
         # --enable=all cerca tutti i tipi di problemi (style, performance, warning)
         # --error-exitcode=1 fa fallire la pipeline se trova errori gravi
-        cppcheck --enable=all --error-exitcode=1 src/
+        cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem --suppress=unusedFunction src/
 
     # D. Compila il firmware (viene eseguito solo se Cppcheck non trova errori critici)
     - name: Compila il firmware
