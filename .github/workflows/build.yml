@@ -1,34 +1,42 @@
 name: Build PlatformIO
 
-# 1. Quando deve partire la pipeline?
 on:
   push:
-    branches: [ "main", "master" ] # Modifica se il tuo branch principale ha un altro nome
+    branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
 
-# 2. Cosa deve fare?
 jobs:
   build:
-    runs-on: ubuntu-latest # Usa un server Linux fresco di fabbrica
+    runs-on: ubuntu-latest
 
     steps:
-    # A. Scarica il codice dal tuo repository
+    # A. Scarica il codice
     - name: Checkout del codice
       uses: actions/checkout@v4
 
-    # B. Prepara l'ambiente installando Python (necessario per PlatformIO)
+    # B. Prepara l'ambiente Python e PlatformIO
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-
-    # C. Installa il motore di compilazione (PlatformIO)
+        
     - name: Installa PlatformIO
       run: |
         python -m pip install --upgrade pip
         pip install --upgrade platformio
 
-    # D. Compila il firmware! (Equivale a cliccare "Verifica" sull'IDE)
+    # C. Analisi Statica con Cppcheck
+    - name: Installa Cppcheck e Analizza il codice
+      run: |
+        # 1. Installa lo strumento sul server Linux
+        sudo apt-get update
+        sudo apt-get install -y cppcheck
+        # 2. Esegue l'analisi solo sulla cartella 'src' (dove sta il tuo codice C++)
+        # --enable=all cerca tutti i tipi di problemi (style, performance, warning)
+        # --error-exitcode=1 fa fallire la pipeline se trova errori gravi
+        cppcheck --enable=all --error-exitcode=1 src/
+
+    # D. Compila il firmware (viene eseguito solo se Cppcheck non trova errori critici)
     - name: Compila il firmware
       run: pio run
